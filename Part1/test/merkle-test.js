@@ -34,12 +34,12 @@ describe("MerkleTree", function () {
         )
         const poseidonT3 = await PoseidonT3.deploy();
         await poseidonT3.deployed();
-
         const MerkleTree = await ethers.getContractFactory("MerkleTree", {
             libraries: {
                 PoseidonT3: poseidonT3.address
             },
           });
+
         merkleTree = await MerkleTree.deploy();
         await merkleTree.deployed();
     });
@@ -55,15 +55,20 @@ describe("MerkleTree", function () {
             "leaf": "1",
             "path_elements": ["2", node9, node13],
             "path_index": ["0", "0", "0"]
-        }
+        };
+        const Input1 = {
+            "leaf": "1",
+            "path_elements": ["1", node9, node13],
+            "path_index": ["1", "0", "0"]
+        };
+        //const { proof1, publicSignals1 } = await groth16.fullProve(Input1, "circuits/circuit_js/circuit.wasm","circuits/circuit_final.zkey");
         const { proof, publicSignals } = await groth16.fullProve(Input, "circuits/circuit_js/circuit.wasm","circuits/circuit_final.zkey");
-
         const editedPublicSignals = unstringifyBigInts(publicSignals);
         const editedProof = unstringifyBigInts(proof);
         const calldata = await groth16.exportSolidityCallData(editedProof, editedPublicSignals);
-    
+
         const argv = calldata.replace(/["[\]\s]/g, "").split(',').map(x => BigInt(x).toString());
-    
+
         const a = [argv[0], argv[1]];
         const b = [[argv[2], argv[3]], [argv[4], argv[5]]];
         const c = [argv[6], argv[7]];
@@ -72,5 +77,18 @@ describe("MerkleTree", function () {
         expect(await merkleTree.verify(a, b, c, input)).to.be.true;
 
         // [bonus] verify the second leaf with the inclusion proof
+
+        /*const editedPublicSignals1 = unstringifyBigInts(publicSignals1);
+        const editedProof1 = unstringifyBigInts(proof1);
+        const calldata1 = await groth16.exportSolidityCallData(editedProof1, editedPublicSignals1);
+
+        const argv1 = calldata1.replace(/["[\]\s]/g, "").split(',').map(x => BigInt(x).toString());
+
+        const a1 = [argv1[0], argv1[1]];
+        const b1 = [[argv1[2], argv1[3]], [argv1[4], argv1[5]]];
+        const c1 = [argv1[6], argv1[7]];
+        const input1 = argv1.slice(8);
+
+        expect(await merkleTree.verify(a1, b1, c1, input1)).to.be.true;*/
     });
 });
